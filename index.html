@@ -23,7 +23,7 @@
         background-color: var(--bg-main);
         color: var(--text-main);
         min-height: 100vh;
-        padding: 12px;
+        padding: 8px;
         display: flex;
         justify-content: center;
     }
@@ -35,10 +35,11 @@
         max-width: 960px;
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        padding: 16px;
+        padding: 12px;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
+        overflow: hidden; /* Prevent child overflow */
     }
 
     /* Top Controls Bar */
@@ -66,15 +67,15 @@
         align-items: center;
     }
 
-    /* Buttons (Mobile-friendly 44px min touch-target height) */
+    /* Buttons */
     .btn {
         background: #f1f5f9;
         border: 1px solid #cbd5e1;
         color: #334155;
-        padding: 8px 14px;
-        min-height: 40px;
+        padding: 8px 12px;
+        min-height: 38px;
         border-radius: 8px;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         cursor: pointer;
         display: inline-flex;
@@ -88,15 +89,9 @@
     .btn-primary { background: var(--primary-blue); color: #ffffff; border: none; }
     .btn-primary:hover { background: var(--primary-blue-hover); }
 
-    /* Scrollable Table Area */
-    .tree-scroll-container {
-        width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
+    /* Main Viewport Container (Fit-to-Screen) */
     .tree-viewport {
-        min-width: 620px; /* Guarantees layout integrity on small mobile screens */
+        width: 100%;
     }
 
     /* Table Column Header */
@@ -105,35 +100,54 @@
         align-items: center;
         padding: 8px 0;
         border-bottom: 2px solid var(--border-color);
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
         color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    .header-left { flex: 1; }
-    .header-right { display: flex; align-items: center; width: 180px; justify-content: flex-end; }
+    .header-left { flex: 1; min-width: 0; }
+    .header-right { 
+        display: flex; 
+        align-items: center; 
+        width: 130px; 
+        justify-content: flex-end; 
+        flex-shrink: 0;
+    }
 
-    .col-grade { width: 70px; text-align: center; }
-    .col-status { width: 110px; text-align: right; }
+    .col-grade { width: 45px; text-align: center; }
+    .col-status { width: 85px; text-align: right; }
 
     /* Rows */
     .okr-row {
         display: flex;
         align-items: center;
-        min-height: 52px;
+        min-height: 48px;
         border-bottom: 1px solid var(--border-color);
         position: relative;
-        padding: 4px 0;
+        padding: 6px 0;
     }
 
-    .row-left { display: flex; align-items: center; flex: 1; height: 100%; }
-    .row-right { display: flex; align-items: center; width: 180px; justify-content: flex-end; font-size: 13px; font-weight: 600; }
+    .row-left { 
+        display: flex; 
+        align-items: center; 
+        flex: 1; 
+        min-width: 0; /* Ensures text wraps inside flex item */
+    }
+    .row-right { 
+        display: flex; 
+        align-items: center; 
+        width: 130px; 
+        justify-content: flex-end; 
+        font-size: 12px; 
+        font-weight: 600; 
+        flex-shrink: 0;
+    }
 
     /* Icons & Chevrons */
     .chevron {
-        width: 28px;
-        height: 28px;
+        width: 20px;
+        height: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -145,91 +159,111 @@
     .chevron.collapsed { transform: rotate(-90deg); }
 
     .icon {
-        width: 24px; height: 24px; border-radius: 6px; display: flex;
-        align-items: center; justify-content: center; font-size: 11px;
-        font-weight: 700; color: #ffffff; margin-left: 4px; flex-shrink: 0;
+        width: 22px; height: 22px; border-radius: 5px; display: flex;
+        align-items: center; justify-content: center; font-size: 10px;
+        font-weight: 700; color: #ffffff; margin-left: 2px; flex-shrink: 0;
     }
     .icon-obj { background-color: var(--primary-blue); }
     .icon-kr { background-color: #fc803a; }
     .icon-task { background-color: #a560f6; }
 
-    /* Inputs & Text */
+    /* Inputs & Wrapped Text */
     .editable-title {
-        font-size: 13px; font-weight: 500; color: var(--text-main); margin-left: 8px;
-        border: 1px solid transparent; padding: 6px 8px; border-radius: 6px;
-        outline: none; width: 100%; font-family: inherit;
+        font-size: 12px; 
+        font-weight: 500; 
+        color: var(--text-main); 
+        margin-left: 4px;
+        border: 1px solid transparent; 
+        padding: 4px 6px; 
+        border-radius: 6px;
+        outline: none; 
+        font-family: inherit;
+        flex: 1;
+        min-width: 0;
+        word-break: break-word;
     }
     .editable-title:focus { border-color: #cbd5e1; background: #f8fafc; }
     .editable-title.bold { font-weight: 600; color: #0f172a; }
 
     .num-input {
-        border: 1px solid #cbd5e1; background: #ffffff; font-family: inherit; font-size: 13px;
-        font-weight: 600; color: inherit; text-align: center; width: 50px; border-radius: 6px; padding: 4px 2px;
+        border: 1px solid #cbd5e1; background: #ffffff; font-family: inherit; font-size: 11px;
+        font-weight: 600; color: inherit; text-align: center; width: 38px; border-radius: 4px; padding: 2px 0;
     }
     .num-input:focus { border-color: #94a3b8; outline: none; }
-    .computed-grade { display: inline-block; width: 50px; text-align: center; font-weight: 600; }
+    .computed-grade { display: inline-block; width: 40px; text-align: center; font-weight: 600; font-size: 11px; }
 
     .text-green { color: #16a34a; }
     .text-red { color: #dc2626; }
 
     /* Dropdown Badge */
     .status-select {
-        height: 28px; padding: 0 20px 0 8px; border-radius: 6px;
-        font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
-        margin-left: auto; cursor: pointer; border: none; font-family: inherit;
-        appearance: none; outline: none;
+        height: 26px; 
+        padding: 0 14px 0 4px; 
+        border-radius: 6px;
+        font-size: 9px; 
+        font-weight: 700; 
+        letter-spacing: 0.2px;
+        margin-left: auto; 
+        cursor: pointer; 
+        border: none; 
+        font-family: inherit;
+        appearance: none; 
+        outline: none;
+        max-width: 80px;
         background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-        background-repeat: no-repeat; background-position: right 4px center; background-size: 12px;
+        background-repeat: no-repeat; 
+        background-position: right 2px center; 
+        background-size: 10px;
     }
     .badge-outline-green { border: 1px solid #16a34a; color: #16a34a; background-color: transparent; }
     .badge-solid-green { background-color: #dcfce7; color: #15803d; }
     .badge-solid-grey { background-color: #f1f5f9; color: #64748b; }
 
-    /* Touch-friendly Row Add Buttons */
+    /* Row Add Buttons */
     .row-add-btn {
-        opacity: 0.7;
+        opacity: 0.8;
         background: #f1f5f9;
         border: 1px solid #e2e8f0;
         color: #64748b;
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
         cursor: pointer;
-        margin-left: 6px;
+        margin-left: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: bold;
         flex-shrink: 0;
     }
     .okr-row:hover .row-add-btn { opacity: 1; background: #e2e8f0; }
 
-    /* Tree Lines & Indents */
+    /* Compact Tree Lines & Indents for Mobile Screens */
     .tree-children { position: relative; }
     .tree-children.collapsed { display: none; }
     
     .level-0 { padding-left: 0; }
-    .level-1 { padding-left: 20px; }
+    .level-1 { padding-left: 12px; }
     .level-1-children::before {
-        content: ''; position: absolute; top: 0; bottom: 26px;
-        left: 8px; border-left: 2px solid var(--border-color); z-index: 1;
+        content: ''; position: absolute; top: 0; bottom: 20px;
+        left: 4px; border-left: 2px solid var(--border-color); z-index: 1;
     }
     .level-1::before {
-        content: ''; position: absolute; top: 26px; left: 8px; width: 12px;
+        content: ''; position: absolute; top: 24px; left: 4px; width: 6px;
         border-top: 2px solid var(--border-color); z-index: 1;
     }
-    .level-2 { padding-left: 56px; }
+    .level-2 { padding-left: 26px; }
     .level-2-children::before {
-        content: ''; position: absolute; top: 0; bottom: 26px;
-        left: 28px; border-left: 2px solid var(--border-color); z-index: 1;
+        content: ''; position: absolute; top: 0; bottom: 20px;
+        left: 14px; border-left: 2px solid var(--border-color); z-index: 1;
     }
     .level-2::before {
-        content: ''; position: absolute; top: 26px; left: 28px; width: 28px;
+        content: ''; position: absolute; top: 24px; left: 14px; width: 10px;
         border-top: 2px solid var(--border-color); z-index: 1;
     }
 
-    /* Modal Styling (Responsive Sheet) */
+    /* Modal Styling */
     .modal-overlay {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
         background: rgba(15, 23, 42, 0.5); display: none; align-items: center;
@@ -250,13 +284,25 @@
     .form-group input:focus { border-color: var(--primary-blue); }
     .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
-    /* Media Queries for Desktop Enhancements */
+    /* Media Queries for Desktop Screen Expansion */
     @media (min-width: 640px) {
         body { padding: 40px 20px; }
-        .okr-card { padding: 24px 32px; }
+        .okr-card { padding: 24px 32px; gap: 16px; }
         .okr-toolbar { flex-direction: row; justify-content: space-between; align-items: center; }
         .toolbar-actions { flex: 0 0 auto; }
-        .btn { flex: 0 0 auto; }
+        .btn { flex: 0 0 auto; font-size: 13px; min-height: 40px; }
+        
+        .header-right, .row-right { width: 180px; font-size: 13px; }
+        .col-grade { width: 70px; }
+        .col-status { width: 110px; }
+        .status-select { max-width: 100%; font-size: 10px; height: 28px; padding: 0 20px 0 8px; }
+        .computed-grade { width: 50px; font-size: 13px; }
+        .num-input { width: 50px; font-size: 13px; padding: 4px 2px; }
+        .editable-title { font-size: 13px; }
+        .chevron { width: 28px; height: 28px; }
+        .icon { width: 24px; height: 24px; font-size: 11px; }
+        .row-add-btn { width: 28px; height: 28px; font-size: 14px; }
+
         .level-1 { padding-left: 32px; }
         .level-1-children::before { left: 10px; }
         .level-1::before { left: 10px; width: 22px; }
@@ -276,24 +322,21 @@
         </div>
         <div class="toolbar-actions">
             <button class="btn" onclick="addObjective()">+ Objective</button>
-            <button class="btn" onclick="openSettings()">⚙️ Sync Settings</button>
+            <button class="btn" onclick="openSettings()">⚙️ Settings</button>
             <button class="btn btn-primary" onclick="pushToGitHub()">☁️ Push</button>
         </div>
     </div>
 
-    <!-- Scrollable container for smaller screens -->
-    <div class="tree-scroll-container">
-        <div class="tree-viewport">
-            <div class="okr-header">
-                <div class="header-left">Hierarchy</div>
-                <div class="header-right">
-                    <span class="col-grade">Grade</span>
-                    <span class="col-status">Status</span>
-                </div>
+    <div class="tree-viewport">
+        <div class="okr-header">
+            <div class="header-left">Hierarchy</div>
+            <div class="header-right">
+                <span class="col-grade">Grade</span>
+                <span class="col-status">Status</span>
             </div>
-
-            <div id="tree-root" class="tree-root"></div>
         </div>
+
+        <div id="tree-root" class="tree-root"></div>
     </div>
 </div>
 
@@ -330,7 +373,7 @@
         <div class="okr-row level-0">
             <div class="row-left">
                 <div class="chevron" onclick="toggleChildren(this)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="icon icon-obj">O</div>
                 <input type="text" class="editable-title bold" value="New Objective...">
@@ -356,7 +399,7 @@
         <div class="okr-row level-1">
             <div class="row-left">
                 <div class="chevron" onclick="toggleChildren(this)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
                 <div class="icon icon-kr">KR</div>
                 <input type="text" class="editable-title" value="New Key Result...">
@@ -381,7 +424,7 @@
     <div class="okr-row level-2">
         <div class="row-left">
             <div class="icon icon-task">
-                <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M11.3 1.046A1 1 0 0112 2v6h6.5a1 1 0 01.78 1.625l-9 11A1 1 0 018 20v-7H2.5a1 1 0 01-.84-1.543l8-10A1 1 0 0111.3 1.046z"/></svg>
+                <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path d="M11.3 1.046A1 1 0 0112 2v6h6.5a1 1 0 01.78 1.625l-9 11A1 1 0 018 20v-7H2.5a1 1 0 01-.84-1.543l8-10A1 1 0 0111.3 1.046z"/></svg>
             </div>
             <input type="text" class="editable-title" value="New Task...">
         </div>
