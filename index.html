@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive OKR Tree with GitHub Sync</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #eef2f6;
+        display: flex; justify-content: center; align-items: flex-start;
+        min-height: 100vh; padding: 40px 20px;
+    }
+
+    .okr-card {
+        background: #ffffff; width: 100%; max-width: 900px;
+        border-radius: 16px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+        padding: 24px 32px 32px 32px; color: #1e293b;
+    }
+
+    /* Header */
+    .okr-header {
+        display: flex; align-items: center; padding-bottom: 12px;
+        border-bottom: 2px solid #eaedf2; font-size: 13px; font-weight: 500; color: #718096;
+    }
+    .header-left { display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; }
+    .header-icon { color: #8f9bb3; display: flex; align-items: center; }
+    .header-right { display: flex; align-items: center; width: 200px; }
+    
+    .col-grade { width: 80px; text-align: center; }
+    .col-status { width: 120px; text-align: right; padding-right: 4px; }
+
+    /* Rows */
+    .okr-row {
+        display: flex; align-items: center; height: 56px;
+        border-bottom: 1px solid #eaedf2; position: relative;
+    }
+    .okr-row:last-child { border-bottom: none; }
+    
+    .row-left { display: flex; align-items: center; flex: 1; height: 100%; }
+    .row-right { display: flex; align-items: center; width: 200px; font-size: 14px; font-weight: 600; }
+
+    /* Icons & Chevrons */
+    .chevron {
+        width: 20px; display: flex; align-items: center; justify-content: center;
+        color: #475569; cursor: pointer; transition: transform 0.2s ease;
+    }
+    .chevron.collapsed { transform: rotate(-90deg); }
+
+    .icon {
+        width: 24px; height: 24px; border-radius: 6px; display: flex;
+        align-items: center; justify-content: center; font-size: 11px;
+        font-weight: 700; color: #ffffff; margin-left: 8px; flex-shrink: 0;
+    }
+    .icon-obj { background-color: #0b2a5c; }
+    .icon-kr { background-color: #fc803a; }
+    .icon-task { background-color: #a560f6; }
+
+    /* Inputs & Text */
+    .editable-title {
+        font-size: 14px; font-weight: 500; color: #1e293b; margin-left: 12px;
+        border: 1px solid transparent; padding: 4px 8px; border-radius: 4px;
+        outline: none; width: 100%; font-family: inherit;
+    }
+    .editable-title:focus { border-color: #cbd5e1; background: #f8fafc; }
+    .editable-title.bold { font-weight: 600; color: #0f172a; }
+
+    .num-input {
+        border: 1px solid #cbd5e1; background: #ffffff; font-family: inherit; font-size: 13px;
+        font-weight: 600; color: inherit; text-align: center; width: 55px; border-radius: 4px; padding: 2px;
+    }
+    .num-input:focus { border-color: #94a3b8; outline: none; }
+    .computed-grade {
+        display: inline-block; width: 55px; text-align: center; font-weight: 600;
+    }
+
+    .text-green { color: #2eba72; }
+    .text-red { color: #ef4444; }
+
+    /* Dropdown Badge */
+    .status-select {
+        height: 24px; padding: 0 24px 0 10px; border-radius: 4px;
+        font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+        margin-left: auto; cursor: pointer; border: none; font-family: inherit;
+        appearance: none; outline: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat; background-position: right 6px center; background-size: 12px;
+    }
+    .badge-outline-green { border: 1px solid #75d0a2; color: #2eba72; background-color: transparent; }
+    .badge-solid-green { background-color: #e6f6ed; color: #2eba72; }
+    .badge-solid-grey { background-color: #f1f5f9; color: #64748b; }
+
+    /* Buttons */
+    .btn {
+        background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; padding: 6px 12px;
+        border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; gap: 4px; transition: all 0.2s;
+    }
+    .btn:hover { background: #e2e8f0; }
+    .btn-primary { background: #0b2a5c; color: #ffffff; border: none; }
+    .btn-primary:hover { background: #1e3a8a; }
+
+    .row-add-btn {
+        opacity: 0; background: #f1f5f9; border: none; color: #64748b;
+        width: 24px; height: 24px; border-radius: 4px; cursor: pointer;
+        margin-left: 8px; display: flex; align-items: center; justify-content: center;
+        transition: opacity 0.2s;
+    }
+    .okr-row:hover .row-add-btn { opacity: 1; }
+
+    /* Tree Lines & Indents */
+    .tree-children { position: relative; }
+    .tree-children.collapsed { display: none; }
+    
+    .level-0 { padding-left: 0; }
+    .level-1 { padding-left: 32px; }
+    .level-1-children::before {
+        content: ''; position: absolute; top: 0; bottom: 28px;
+        left: 10px; border-left: 2px solid #eaedf2; z-index: 1;
+    }
+    .level-1::before {
+        content: ''; position: absolute; top: 28px; left: 10px; width: 22px;
+        border-top: 2px solid #eaedf2; z-index: 1;
+    }
+    .level-2 { padding-left: 96px; }
+    .level-2-children::before {
+        content: ''; position: absolute; top: 0; bottom: 28px;
+        left: 42px; border-left: 2px solid #eaedf2; z-index: 1;
+    }
+    .level-2::before {
+        content: ''; position: absolute; top: 28px; left: 42px; width: 46px;
+        border-top: 2px solid #eaedf2; z-index: 1;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(15, 23, 42, 0.4); display: none; align-items: center;
+        justify-content: center; z-index: 1000;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+        background: #ffffff; padding: 24px; border-radius: 12px;
+        width: 100%; max-width: 450px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .modal-header { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 4px; }
+    .form-group input {
+        width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid #cbd5e1;
+        border-radius: 6px; outline: none; font-family: inherit;
+    }
+    .form-group input:focus { border-color: #0b2a5c; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="okr-card">
+    <div class="okr-header">
+        <div class="header-left">
+            <div class="header-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 15 12 20 17 15"></polyline><polyline points="7 9 12 4 17 9"></polyline></svg>
+            </div>
+            <span>OKRs</span>
+            <button class="btn" onclick="addObjective()">+ Objective</button>
+            <button class="btn" onclick="openSettings()">⚙️ GitHub Sync</button>
+            <button class="btn btn-primary" onclick="pushToGitHub()">☁️ Push to GitHub</button>
+        </div>
+        <div class="header-right">
+            <span class="col-grade">Grade</span>
+            <span class="col-status">Status</span>
+        </div>
+    </div>
+
+    <div id="tree-root" class="tree-root"></div>
+</div>
+
+<!-- GitHub Settings Modal -->
+<div id="settings-modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">GitHub Sync Settings</div>
+        <div class="form-group">
+            <label for="gh-username">GitHub Username</label>
+            <input type="text" id="gh-username" placeholder="e.g. octocat">
+        </div>
+        <div class="form-group">
+            <label for="gh-repo">Repository Name</label>
+            <input type="text" id="gh-repo" placeholder="e.g. my-okr-app">
+        </div>
+        <div class="form-group">
+            <label for="gh-filepath">Data File Path in Repo</label>
+            <input type="text" id="gh-filepath" placeholder="e.g. okr-data.json">
+        </div>
+        <div class="form-group">
+            <label for="gh-token">Fine-Grained Personal Access Token</label>
+            <input type="password" id="gh-token" placeholder="github_pat_11A...">
+        </div>
+        <div class="modal-actions">
+            <button class="btn" onclick="closeSettings()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveSettings()">Save & Sync</button>
+        </div>
+    </div>
+</div>
+
+<!-- Templates -->
+<template id="tpl-objective">
+    <div class="okr-group">
+        <div class="okr-row level-0">
+            <div class="row-left">
+                <div class="chevron" onclick="toggleChildren(this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="icon icon-obj">C</div>
+                <input type="text" class="editable-title bold" value="New Objective Description...">
+                <button class="row-add-btn" title="Add Key Result" onclick="addKeyResult(this)">+</button>
+            </div>
+            <div class="row-right">
+                <span class="col-grade"><span class="computed-grade text-red">0%</span></span>
+                <span class="col-status">
+                    <select class="status-select badge-solid-grey" onchange="updateStatusColor(this)">
+                        <option value="ON TRACK">ON TRACK</option>
+                        <option value="DONE">DONE</option>
+                        <option value="TO DO" selected>TO DO</option>
+                    </select>
+                </span>
+            </div>
+        </div>
+        <div class="tree-children level-1-children"></div>
+    </div>
+</template>
+
+<template id="tpl-key-result">
+    <div class="kr-group">
+        <div class="okr-row level-1">
+            <div class="row-left">
+                <div class="chevron" onclick="toggleChildren(this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div class="icon icon-kr">KR</div>
+                <input type="text" class="editable-title" value="New Key Result...">
+                <button class="row-add-btn" title="Add Task" onclick="addTask(this)">+</button>
+            </div>
+            <div class="row-right">
+                <span class="col-grade"><span class="computed-grade text-red">0%</span></span>
+                <span class="col-status">
+                    <select class="status-select badge-solid-grey" onchange="updateStatusColor(this)">
+                        <option value="ON TRACK">ON TRACK</option>
+                        <option value="DONE">DONE</option>
+                        <option value="TO DO" selected>TO DO</option>
+                    </select>
+                </span>
+            </div>
+        </div>
+        <div class="tree-children level-2-children"></div>
+    </div>
+</template>
+
+<template id="tpl-task">
+    <div class="okr-row level-2">
+        <div class="row-left">
+            <div class="icon icon-task">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M11.3 1.046A1 1 0 0112 2v6h6.5a1 1 0 01.78 1.625l-9 11A1 1 0 018 20v-7H2.5a1 1 0 01-.84-1.543l8-10A1 1 0 0111.3 1.046z"/></svg>
+            </div>
+            <input type="text" class="editable-title" value="New Task...">
+        </div>
+        <div class="row-right">
+            <span class="col-grade">
+                <input type="number" class="num-input text-red" value="0" min="0" max="100" oninput="onTaskGradeChange(this)">%
+            </span>
+            <span class="col-status">
+                <select class="status-select badge-solid-grey" onchange="updateStatusColor(this)">
+                    <option value="ON TRACK">ON TRACK</option>
+                    <option value="DONE">DONE</option>
+                    <option value="TO DO" selected>TO DO</option>
+                </select>
+            </span>
+        </div>
+    </div>
+</template>
+
+<script>
+    let currentSha = null; // Store file SHA required for GitHub updates
+
+    // Settings Modal
+    function openSettings() {
+        document.getElementById('gh-username').value = localStorage.getItem('gh_username') || '';
+        document.getElementById('gh-repo').value = localStorage.getItem('gh_repo') || '';
+        document.getElementById('gh-filepath').value = localStorage.getItem('gh_filepath') || 'okr-data.json';
+        document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
+        document.getElementById('settings-modal').classList.add('active');
+    }
+
+    function closeSettings() {
+        document.getElementById('settings-modal').classList.remove('active');
+    }
+
+    function saveSettings() {
+        localStorage.setItem('gh_username', document.getElementById('gh-username').value.trim());
+        localStorage.setItem('gh_repo', document.getElementById('gh-repo').value.trim());
+        localStorage.setItem('gh_filepath', document.getElementById('gh-filepath').value.trim());
+        localStorage.setItem('gh_token', document.getElementById('gh-token').value.trim());
+        closeSettings();
+        fetchFromGitHub();
+    }
+
+    // Toggle Collapse/Expand
+    function toggleChildren(element) {
+        element.classList.toggle('collapsed');
+        const parentRow = element.closest('.okr-row');
+        const childrenContainer = parentRow.nextElementSibling;
+        if (childrenContainer && childrenContainer.classList.contains('tree-children')) {
+            childrenContainer.classList.toggle('collapsed');
+        }
+    }
+
+    function updateStatusColor(select) {
+        select.classList.remove('badge-outline-green', 'badge-solid-green', 'badge-solid-grey');
+        if (select.value === 'ON TRACK') select.classList.add('badge-outline-green');
+        else if (select.value === 'DONE') select.classList.add('badge-solid-green');
+        else if (select.value === 'TO DO') select.classList.add('badge-solid-grey');
+    }
+
+    function autoSetStatus(row, grade) {
+        const select = row.querySelector('.status-select');
+        if (!select) return;
+        if (grade === 100) select.value = 'DONE';
+        else if (grade > 0) select.value = 'ON TRACK';
+        else select.value = 'TO DO';
+        updateStatusColor(select);
+    }
+
+    function onTaskGradeChange(input) {
+        let val = parseInt(input.value) || 0;
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        input.value = val;
+
+        input.classList.remove('text-green', 'text-red');
+        input.classList.add(val > 0 ? 'text-green' : 'text-red');
+
+        autoSetStatus(input.closest('.okr-row'), val);
+        recalculateKR(input.closest('.kr-group'));
+    }
+
+    function recalculateKR(krGroup) {
+        if (!krGroup) return;
+        const taskInputs = krGroup.querySelectorAll('.level-2-children .num-input');
+        let total = 0, count = taskInputs.length;
+
+        if (count > 0) taskInputs.forEach(inp => total += parseInt(inp.value) || 0);
+
+        const avgGrade = count === 0 ? 0 : Math.round(total / count);
+        const krRow = krGroup.querySelector('.level-1');
+        const gradeSpan = krRow.querySelector('.computed-grade');
+
+        gradeSpan.textContent = avgGrade + '%';
+        gradeSpan.classList.remove('text-green', 'text-red');
+        gradeSpan.classList.add(avgGrade > 0 ? 'text-green' : 'text-red');
+
+        autoSetStatus(krRow, avgGrade);
+        recalculateObjective(krGroup.closest('.okr-group'));
+    }
+
+    function recalculateObjective(objGroup) {
+        if (!objGroup) return;
+        const krGrades = objGroup.querySelectorAll('.level-1-children .kr-group .level-1 .computed-grade');
+        let total = 0, count = krGrades.length;
+
+        if (count > 0) krGrades.forEach(span => total += parseInt(span.textContent) || 0);
+
+        const avgGrade = count === 0 ? 0 : Math.round(total / count);
+        const objRow = objGroup.querySelector('.level-0');
+        const gradeSpan = objRow.querySelector('.computed-grade');
+
+        gradeSpan.textContent = avgGrade + '%';
+        gradeSpan.classList.remove('text-green', 'text-red');
+        gradeSpan.classList.add(avgGrade > 0 ? 'text-green' : 'text-red');
+
+        autoSetStatus(objRow, avgGrade);
+    }
+
+    // Add Elements
+    function addObjective() {
+        const tpl = document.getElementById('tpl-objective');
+        const clone = tpl.content.cloneNode(true);
+        document.getElementById('tree-root').appendChild(clone);
+    }
+
+    function addKeyResult(btn) {
+        const tpl = document.getElementById('tpl-key-result');
+        const clone = tpl.content.cloneNode(true);
+        const objGroup = btn.closest('.okr-group');
+        objGroup.querySelector('.level-1-children').appendChild(clone);
+        recalculateObjective(objGroup);
+    }
+
+    function addTask(btn) {
+        const tpl = document.getElementById('tpl-task');
+        const clone = tpl.content.cloneNode(true);
+        const krGroup = btn.closest('.kr-group');
+        krGroup.querySelector('.level-2-children').appendChild(clone);
+        recalculateKR(krGroup);
+    }
+
+    // Export & Import Data Structure
+    function exportToData() {
+        const data = [];
+        document.querySelectorAll('.okr-group').forEach(objGroup => {
+            const objTitle = objGroup.querySelector('.level-0 .editable-title').value;
+            const objStatus = objGroup.querySelector('.level-0 .status-select').value;
+            const krs = [];
+
+            objGroup.querySelectorAll('.kr-group').forEach(krGroup => {
+                const krTitle = krGroup.querySelector('.level-1 .editable-title').value;
+                const krStatus = krGroup.querySelector('.level-1 .status-select').value;
+                const tasks = [];
+
+                krGroup.querySelectorAll('.level-2').forEach(taskRow => {
+                    tasks.push({
+                        title: taskRow.querySelector('.editable-title').value,
+                        grade: parseInt(taskRow.querySelector('.num-input').value) || 0,
+                        status: taskRow.querySelector('.status-select').value
+                    });
+                });
+
+                krs.push({ title: krTitle, status: krStatus, tasks });
+            });
+
+            data.push({ title: objTitle, status: objStatus, keyResults: krs });
+        });
+        return data;
+    }
+
+    function renderFromData(data) {
+        const treeRoot = document.getElementById('tree-root');
+        treeRoot.innerHTML = '';
+
+        data.forEach(obj => {
+            addObjective();
+            const objGroup = treeRoot.lastElementChild;
+            objGroup.querySelector('.level-0 .editable-title').value = obj.title;
+
+            (obj.keyResults || []).forEach(kr => {
+                addKeyResult(objGroup.querySelector('.row-add-btn'));
+                const krGroup = objGroup.querySelector('.level-1-children').lastElementChild;
+                krGroup.querySelector('.level-1 .editable-title').value = kr.title;
+
+                (kr.tasks || []).forEach(task => {
+                    addTask(krGroup.querySelector('.row-add-btn'));
+                    const taskRow = krGroup.querySelector('.level-2-children').lastElementChild;
+                    taskRow.querySelector('.editable-title').value = task.title;
+                    const taskInput = taskRow.querySelector('.num-input');
+                    taskInput.value = task.grade;
+                    onTaskGradeChange(taskInput);
+                });
+            });
+        });
+    }
+
+    // GitHub API Sync
+    async function fetchFromGitHub() {
+        const username = localStorage.getItem('gh_username');
+        const repo = localStorage.getItem('gh_repo');
+        const filepath = localStorage.getItem('gh_filepath') || 'okr-data.json';
+        const token = localStorage.getItem('gh_token');
+
+        if (!username || !repo || !token) return;
+
+        const url = `https://api.github.com/repos/${username}/${repo}/contents/${filepath}`;
+
+        try {
+            const res = await fetch(url, {
+                headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+
+            if (res.ok) {
+                const json = await res.json();
+                currentSha = json.sha; // Save SHA for future commits
+                const decodedContent = decodeURIComponent(escape(atob(json.content)));
+                const data = JSON.parse(decodedContent);
+                renderFromData(data);
+            } else if (res.status === 404) {
+                console.log("File does not exist yet. It will be created on push.");
+            } else {
+                alert("GitHub Fetch Error: " + res.statusText);
+            }
+        } catch (err) {
+            console.error("Error fetching data:", err);
+        }
+    }
+
+    async function pushToGitHub() {
+        const username = localStorage.getItem('gh_username');
+        const repo = localStorage.getItem('gh_repo');
+        const filepath = localStorage.getItem('gh_filepath') || 'okr-data.json';
+        const token = localStorage.getItem('gh_token');
+
+        if (!username || !repo || !token) {
+            alert("Please configure your GitHub settings first!");
+            openSettings();
+            return;
+        }
+
+        const data = exportToData();
+        const jsonString = JSON.stringify(data, null, 2);
+        const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
+
+        const url = `https://api.github.com/repos/${username}/${repo}/contents/${filepath}`;
+        const body = {
+            message: "Update OKR data via web app",
+            content: encodedContent
+        };
+        if (currentSha) body.sha = currentSha;
+
+        try {
+            const res = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                const json = await res.json();
+                currentSha = json.content.sha;
+                alert("Successfully saved data to GitHub!");
+            } else {
+                const err = await res.json();
+                alert("Failed to save to GitHub: " + (err.message || res.statusText));
+            }
+        } catch (err) {
+            alert("Error pushing to GitHub: " + err.message);
+        }
+    }
+
+    // Default Initialization
+    window.onload = () => {
+        if (localStorage.getItem('gh_token')) {
+            fetchFromGitHub();
+        } else {
+            // Load demo data if no credentials saved
+            addObjective();
+            const objGroup = document.querySelector('.okr-group');
+            objGroup.querySelector('.editable-title').value = "Significantly increase market presence...";
+            addKeyResult(objGroup.querySelector('.row-add-btn'));
+            const krGroup = objGroup.querySelector('.kr-group');
+            krGroup.querySelector('.editable-title').value = "Achieve a 25% increase in sales volume...";
+            addTask(krGroup.querySelector('.row-add-btn'));
+            const tasks = krGroup.querySelectorAll('.level-2');
+            tasks[0].querySelector('.editable-title').value = "Expand into 2 new regional markets";
+            const taskInput = tasks[0].querySelector('.num-input');
+            taskInput.value = "100";
+            onTaskGradeChange(taskInput);
+        }
+    };
+</script>
+
+</body>
+</html>
