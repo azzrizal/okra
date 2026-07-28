@@ -1,0 +1,19 @@
+[
+  {
+    "title": "Significantly increase market presence...",
+    "status": "DONE",
+    "keyResults": [
+      {
+        "title": "Achieve a 25% increase in sales volume...",
+        "status": "DONE",
+        "tasks": [
+          {
+            "title": "Expand into 2 new regional markets",
+            "grade": 100,
+            "status": "DONE"
+          }
+        ]
+      }
+    ]
+  }
+]
